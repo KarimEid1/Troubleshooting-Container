@@ -13,7 +13,6 @@ RUN apk add --no-cache \
     iproute2 \
     traceroute \
     jq \
-    telnet \
     vim \
     openssl \
     busybox-extras \
