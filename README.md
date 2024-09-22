@@ -26,3 +26,55 @@ Clone the repository and build the Docker image:
 git clone https://github.com/KarimEid1/Troubleshooting-Container.git
 cd Troubleshooting-Container
 docker build -t troubleshooting-container .
+```
+
+### Runing the Container in a Kubernetes Deployment
+
+Create a Deployment YAML file:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: troubleshooting-container
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: troubleshooting-container
+  template:
+    metadata:
+      labels:
+        app: troubleshooting-container
+    spec:
+      containers:
+      - name: troubleshooting-container
+        image: troubleshooting-container:latest
+        command: ["/bin/sh", "-c", "sleep 3600"]
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+      restartPolicy: Always
+```
+
+Deploy the Pod:
+
+```bash
+kubectl apply -f troubleshooter-deployment.yaml
+```
+
+Verify the Pod is Running:
+
+```bash
+kubectl get pods -l app=troubleshooting-container
+```
+
+Access the Pod:
+
+```bash
+kubectl exec -it $(kubectl get pod -l app=troubleshooting-container -o jsonpath="{.items[0].metadata.name}") -- /bin/sh
+```
+
+## Contributing
+
+Contributions are welcome! If you have any suggestions for additional tools or improvements, feel free to open an issue or submit a pull request.
