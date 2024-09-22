@@ -24,7 +24,7 @@ To run the troubleshooting container declaratively using kubectl run, you can sp
 
 ```bash
 kubectl run troubleshooting-container \
-  --image=troubleshooting-container:latest \
+  --image=karimeid1/troubleshooting-container:latest \
   --restart=Never \
   --command -- /bin/sh -c "sleep 3600"
 ```
@@ -65,7 +65,7 @@ spec:
     spec:
       containers:
       - name: troubleshooting-container
-        image: troubleshooting-container:latest
+        image: karimeid1/troubleshooting-container:latest
         command: ["/bin/sh", "-c", "sleep 3600"]
         securityContext:
           runAsNonRoot: true
