@@ -18,6 +18,9 @@ RUN apk add --no-cache \
     busybox-extras \
     && rm -rf /var/cache/apk/*
 
+# Set up alias for ll
+RUN echo "alias ll='ls -lah'" >> /root/.bashrc
+
 # Set the working directory
 WORKDIR /root
 
