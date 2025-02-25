@@ -25,4 +25,4 @@ RUN echo "alias ll='ls -lah'" >> /root/.bashrc
 WORKDIR /root
 
 # Set default command to sleep to keep the container running
-CMD [ "sleep", "3600" ]
+CMD [ "sleep", "86400" ]
