@@ -1,8 +1,8 @@
 # Use a lightweight base image
 FROM alpine:latest
 
-# Install necessary packages
-RUN apk add --no-cache \
+# Update apk index and install necessary packages
+RUN apk update && apk add --no-cache \
     bash \
     curl \
     wget \
@@ -25,4 +25,4 @@ RUN echo "alias ll='ls -lah'" >> /root/.bashrc
 WORKDIR /root
 
 # Set default command to sleep to keep the container running
-CMD [ "sleep", "86400" ]
+CMD [ "sleep", "infinity" ]
