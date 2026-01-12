@@ -1,6 +1,5 @@
 # Use a lightweight base image
-#FROM alpine:latest
-FROM dhi.io/alpine-base:3.23-alpine3.23-dev
+FROM alpine:latest
 
 # Update apk index and install necessary packages
 RUN apk update && apk add --no-cache \
