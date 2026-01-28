@@ -76,14 +76,20 @@ RUN chmod 0755 /usr/local/bin/kubectl /usr/local/bin/helm /usr/local/bin/oc || t
 RUN ln -sf /bin/bash /bin/sh
 
 # Generate bash completion scripts for kubectl, helm and oc
-# (these commands use the installed binaries to emit completion code)
 RUN mkdir -p /etc/bash_completion.d && \
     if /usr/local/bin/kubectl completion bash >/etc/bash_completion.d/kubectl 2>/dev/null; then true; fi && \
     if /usr/local/bin/helm completion bash >/etc/bash_completion.d/helm 2>/dev/null; then true; fi && \
     if /usr/local/bin/oc completion bash >/etc/bash_completion.d/oc 2>/dev/null; then true; fi
 
 # Ensure bash_completion is sourced for interactive shells (some clients may not source it automatically)
-RUN cat >/etc/profile.d/enable-bash-completion.sh <<'EOF'\n# Enable bash completion for interactive shells\nif [ -f /etc/bash_completion ]; then\n  . /etc/bash_completion\nfi\nEOF
+RUN cat > /etc/profile.d/enable-bash-completion.sh <<'EOF'
+# Enable bash completion for interactive shells
+if [ -f /etc/bash_completion ]; then
+  . /etc/bash_completion
+elif [ -f /usr/share/bash-completion/bash_completion ]; then
+  . /usr/share/bash-completion/bash_completion
+fi
+EOF
 
 WORKDIR /home
 ENV PATH=/usr/local/bin:$PATH
