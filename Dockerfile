@@ -50,9 +50,12 @@ RUN curl -L \
 # Install OpenShift oc
 # ----------------------------
 RUN curl -L \
-    https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/openshift-client-linux.tar.gz | \
-    tar -xz -C /usr/local/bin --wildcards --no-anchored oc && \
-    chmod +x /usr/local/bin/oc
+    https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/openshift-client-linux.tar.gz \
+    -o oc.tar.gz && \
+    tar -xzf oc.tar.gz && \
+    find . -type f -name oc -exec mv {} /usr/local/bin/oc \; && \
+    chmod +x /usr/local/bin/oc && \
+    rm -rf oc.tar.gz README.md kubectl openshift-client-linux*
 
 # ----------------------------
 # Sanity checks
