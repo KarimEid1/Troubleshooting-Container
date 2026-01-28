@@ -1,6 +1,5 @@
 # Multi-stage Dockerfile: builder downloads tools, final stage installs required utilities,
-# includes bash (as /bin/sh), bash-completion for kubectl/helm/oc, and is OpenShift-friendly.
-
+# includes bash (as /bin/sh), bash-completion for kubectl/helm/oc, and runs as root.
 FROM debian:12-slim AS builder
 
 ARG KUBECTL_VERSION=v1.30.3
@@ -37,7 +36,7 @@ RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_V
 RUN cp /etc/ssl/certs/ca-certificates.crt /out/etc/ssl/certs/ca-certificates.crt
 
 # -----------------------------------------------------------------------------
-# Final image: small interactive image with bash, completion, and your tools
+# Final image: small interactive image with bash, completion, all tools, and root user
 # -----------------------------------------------------------------------------
 FROM debian:12-slim
 
@@ -66,7 +65,7 @@ COPY --from=builder /out/helm    /usr/local/bin/helm
 COPY --from=builder /out/oc      /usr/local/bin/oc
 COPY --from=builder /out/etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-# Ensure binaries are executable and common dirs are writable for arbitrary UIDs (OpenShift)
+# Ensure binaries are executable and common dirs exist
 RUN chmod 0755 /usr/local/bin/kubectl /usr/local/bin/helm /usr/local/bin/oc || true && \
     mkdir -p /home /work && \
     chmod 1777 /tmp /home /work && \
@@ -81,7 +80,7 @@ RUN mkdir -p /etc/bash_completion.d && \
     if /usr/local/bin/helm completion bash >/etc/bash_completion.d/helm 2>/dev/null; then true; fi && \
     if /usr/local/bin/oc completion bash >/etc/bash_completion.d/oc 2>/dev/null; then true; fi
 
-# Ensure bash_completion is sourced for interactive shells (some clients may not source it automatically)
+# Ensure bash_completion is sourced for interactive shells
 RUN cat > /etc/profile.d/enable-bash-completion.sh <<'EOF'
 # Enable bash completion for interactive shells
 if [ -f /etc/bash_completion ]; then
@@ -91,9 +90,16 @@ elif [ -f /usr/share/bash-completion/bash_completion ]; then
 fi
 EOF
 
-WORKDIR /home
+# Ensure root home and kube dir exist and are writable by root
+ENV HOME=/root
+RUN mkdir -p /root/.kube && chown root:root /root /root/.kube && chmod 700 /root /root/.kube
+
+WORKDIR /root
 ENV PATH=/usr/local/bin:$PATH
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Run as root so `oc login` can write /root/.kube/config
+USER 0
 
 # Keep container running by default so you can `kubectl/oc exec -it <pod> -- bash`
 CMD ["sleep", "infinity"]
