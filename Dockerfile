@@ -4,7 +4,7 @@
 FROM alpine:3.20
 
 # ----------------------------
-# Versions (pin them!)
+# Versions (pinned for consistency)
 # ----------------------------
 ARG KUBECTL_VERSION=v1.30.3
 ARG HELM_VERSION=v3.15.4
@@ -14,7 +14,6 @@ ARG OC_VERSION=4.16.6
 # Install base utilities
 # ----------------------------
 RUN apk add --no-cache \
-    bash \
     curl \
     bind-tools \
     netcat-openbsd \
@@ -23,7 +22,6 @@ RUN apk add --no-cache \
     iproute2 \
     traceroute \
     jq \
-    vim \
     openssl \
     busybox-extras \
     ca-certificates \
@@ -53,22 +51,22 @@ RUN curl -L \
 # ----------------------------
 RUN curl -L \
     https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/openshift-client-linux.tar.gz | \
-    tar xz && \
-    mv oc /usr/local/bin/oc && \
-    chmod +x /usr/local/bin/oc && \
-    rm -f README.md
+    tar -xz -C /usr/local/bin --wildcards --no-anchored oc && \
+    chmod +x /usr/local/bin/oc
 
 # ----------------------------
-# Sanity checks (fail build if broken)
+# Sanity checks
 # ----------------------------
 RUN kubectl version --client=true && \
     helm version && \
     oc version
 
 # ----------------------------
-# Quality-of-life
+# Set working directory
 # ----------------------------
-RUN echo "alias ll='ls -lah'" >> /root/.bashrc
-
 WORKDIR /root
+
+# ----------------------------
+# Keep container running
+# ----------------------------
 CMD ["sleep", "infinity"]
