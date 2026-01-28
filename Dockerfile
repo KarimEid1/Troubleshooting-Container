@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile: builder downloads tools, final stage installs required utilities,
-# includes bash, and is prepared to run in Kubernetes/OpenShift (works with arbitrary UIDs).
+# includes bash (as /bin/sh), bash-completion for kubectl/helm/oc, and is OpenShift-friendly.
 
 FROM debian:12-slim AS builder
 
@@ -37,12 +37,14 @@ RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_V
 RUN cp /etc/ssl/certs/ca-certificates.crt /out/etc/ssl/certs/ca-certificates.crt
 
 # -----------------------------------------------------------------------------
-# Final image: small interactive image with bash and your requested tools
+# Final image: small interactive image with bash, completion, and your tools
 # -----------------------------------------------------------------------------
 FROM debian:12-slim
 
+# Install the utilities and bash-completion
 RUN apt-get update && apt-get install -y --no-install-recommends \
       bash \
+      bash-completion \
       curl \
       dnsutils \
       netcat-openbsd \
@@ -69,6 +71,19 @@ RUN chmod 0755 /usr/local/bin/kubectl /usr/local/bin/helm /usr/local/bin/oc || t
     mkdir -p /home /work && \
     chmod 1777 /tmp /home /work && \
     chmod 0644 /etc/ssl/certs/ca-certificates.crt || true
+
+# Make /bin/sh point to bash so consoles that spawn /bin/sh get bash behavior
+RUN ln -sf /bin/bash /bin/sh
+
+# Generate bash completion scripts for kubectl, helm and oc
+# (these commands use the installed binaries to emit completion code)
+RUN mkdir -p /etc/bash_completion.d && \
+    if /usr/local/bin/kubectl completion bash >/etc/bash_completion.d/kubectl 2>/dev/null; then true; fi && \
+    if /usr/local/bin/helm completion bash >/etc/bash_completion.d/helm 2>/dev/null; then true; fi && \
+    if /usr/local/bin/oc completion bash >/etc/bash_completion.d/oc 2>/dev/null; then true; fi
+
+# Ensure bash_completion is sourced for interactive shells (some clients may not source it automatically)
+RUN cat >/etc/profile.d/enable-bash-completion.sh <<'EOF'\n# Enable bash completion for interactive shells\nif [ -f /etc/bash_completion ]; then\n  . /etc/bash_completion\nfi\nEOF
 
 WORKDIR /home
 ENV PATH=/usr/local/bin:$PATH
