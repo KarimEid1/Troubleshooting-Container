@@ -1,8 +1,6 @@
-# Use a lightweight base image
 FROM alpine:latest
 
-# Update apk index and install necessary packages
-RUN apk update && apk add --no-cache \
+RUN apk update && apk add \
     bash \
     curl \
     wget \
@@ -15,14 +13,10 @@ RUN apk update && apk add --no-cache \
     jq \
     vim \
     openssl \
-    busybox-extras \
-    && rm -rf /var/cache/apk/*
+    busybox-extras
 
-# Set up alias for ll
 RUN echo "alias ll='ls -lah'" >> /root/.bashrc
 
-# Set the working directory
 WORKDIR /root
 
-# Set default command to sleep to keep the container running
 CMD [ "sleep", "infinity" ]
